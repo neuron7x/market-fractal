@@ -9,13 +9,6 @@ import uuid
 logger = logging.getLogger(__name__)
 _LOGGING_CONFIGURED = False
 
-try:
-    import uvicorn  # noqa: F401
-except ImportError:
-    logger.warning(
-        "Uvicorn is not installed; skipping Uvicorn-specific logging configuration."
-    )
-
 
 class JsonFormatter(logging.Formatter):
     """Format log records as JSON with standard metadata.
@@ -56,6 +49,13 @@ def configure_logging() -> None:
     root = logging.getLogger()
     root.setLevel(level)
     root.handlers = [handler]
+    try:
+        import uvicorn  # noqa: F401
+    except ImportError:
+        logger.debug(
+            "Uvicorn is not installed; skipping Uvicorn-specific logging configuration."
+        )
+
     _LOGGING_CONFIGURED = True
 
 
