@@ -2,7 +2,7 @@
 # This file pins exact versions of Python dependencies used in CI to ensure reproducibility.
 # Update together with requirements.txt when dependencies change.
 
-numpy==1.26.4
+numpy==2.2.6
 pandas==2.2.2
 matplotlib==3.9.2
 scipy==1.14.1
