@@ -1,0 +1,26 @@
+name: ZIPCI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "validate"
+
+  report:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare Issue body
+        if: needs.validate.result != 'success'
+        shell: bash
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_BRANCH: zipci/${{ github.run_id }}
+          ZIP_NAME: ${{ github.event.head_commit.message || 'ZIP' }}
+        run: |
+          sed -e "s|$${{ RUN_URL }}|$RUN_URL|g" \
+              -e "s|$${{ PR_BRANCH }}|$PR_BRANCH|g" \
+              -e "s|$${{ ZIP_NAME }}|$ZIP_NAME|g" .github/ISSUE_TEMPLATE/ci_failure.md > ISSUE_BODY.md
