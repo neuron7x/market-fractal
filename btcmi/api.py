@@ -13,10 +13,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from collections import defaultdict, deque
+from collections import deque
 from functools import lru_cache
 from time import monotonic
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Deque, Dict
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.security import APIKeyHeader
@@ -45,7 +45,7 @@ def load_runners() -> Dict[str, Callable]:
 REQUEST_COUNTER = Counter("btcmi_requests", "Total HTTP requests", ["endpoint"])
 
 # store recent request timestamps per client for throttling
-_req_times: defaultdict[str, deque] = defaultdict(deque)
+_req_times: Dict[str, Deque[float]] = {}
 
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -74,14 +74,33 @@ async def throttle_requests(request: Request, call_next: Callable):
     """Naive rate limiter to reduce brute-force attempts."""
     limit = int(os.getenv("BTCMI_RATE_LIMIT", "60"))
     window = int(os.getenv("BTCMI_RATE_LIMIT_WINDOW", "60"))
+    max_clients = int(os.getenv("BTCMI_RATE_LIMIT_MAX_CLIENTS", "1000"))
     client = request.client.host if request.client else "unknown"
     now = monotonic()
-    q = _req_times[client]
+
+    q = _req_times.get(client, deque())
     while q and q[0] <= now - window:
         q.popleft()
     if len(q) >= limit:
         return Response(status_code=429, content="too many requests")
     q.append(now)
+    _req_times[client] = q
+
+    # prune stale clients to bound memory usage
+    cutoff = now - window
+    stale = [c for c, times in _req_times.items() if not times or times[-1] <= cutoff]
+    for c in stale:
+        del _req_times[c]
+
+    if len(_req_times) > max_clients:
+        # drop clients with the oldest recent activity
+        for c, _ in sorted(
+            _req_times.items(), key=lambda item: item[1][-1] if item[1] else 0
+        ):
+            if len(_req_times) <= max_clients:
+                break
+            del _req_times[c]
+
     return await call_next(request)
 
 
