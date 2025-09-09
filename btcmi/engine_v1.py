@@ -3,16 +3,13 @@
 from __future__ import annotations
 from typing import Dict, Any
 from dataclasses import dataclass
-import logging
 from btcmi.utils import is_number
 from btcmi.config import NORM_SCALE, SCENARIO_WEIGHTS
 from btcmi.feature_processing import normalize_features, weighted_score
+from btcmi.nagr import nagr
 
 
 FeatureMap = Dict[str, float]
-
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,6 +19,7 @@ class BaseSignalResult:
     score: float
     weights: FeatureMap
     contributions: FeatureMap
+
 
 def normalize(features: FeatureMap) -> FeatureMap:
     """Scale raw feature values using hyperbolic tangent."""
@@ -69,22 +67,9 @@ def nagr_score(nodes: Any) -> float:
 
     Returns:
         Weighted average score clipped to [-1, 1].
-
     """
-    if not nodes:
-        return 0.0
-    num = 0.0
-    den = 0.0
-    for n in nodes:
-        try:
-            w = float(n.get("weight", 0.0))
-            sc = float(n.get("score", 0.0))
-        except (TypeError, ValueError) as exc:
-            logger.debug("Skipping node with non-numeric data %s: %s", n, exc)
-            continue
-        num += w * sc
-        den += abs(w)
-    return max(-1.0, min(1.0, num / den if den else 0.0))
+
+    return nagr(nodes)
 
 
 def combine(base: float, nagr: float) -> float:
