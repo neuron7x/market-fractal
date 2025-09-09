@@ -83,31 +83,31 @@ def router_weights(vol_pctl: float):
     return "high", {"L1": 0.40, "L2": 0.40, "L3": 0.20}
 
 
-def combine_levels(L1: float, L2: float, L3: float, w):
+def combine_levels(l1: float, l2: float, l3: float, weights: dict[str, float]) -> float:
     """Merge signals from all levels using provided weights.
 
     Args:
-        L1: Level-one signal value.
-        L2: Level-two signal value.
-        L3: Level-three signal value.
-        w: Weight mapping for each level.
+        l1: Level-one signal value.
+        l2: Level-two signal value.
+        l3: Level-three signal value.
+        weights: Weight mapping for each level.
 
     Returns:
         Combined score clipped to [-1, 1].
 
     """
     req = {"L1", "L2", "L3"}
-    if not req.issubset(w):
-        missing = ", ".join(sorted(req - w.keys()))
+    if not req.issubset(weights):
+        missing = ", ".join(sorted(req - weights.keys()))
         raise ValueError(f"missing weights for: {missing}")
 
-    total = w["L1"] + w["L2"] + w["L3"]
+    total = weights["L1"] + weights["L2"] + weights["L3"]
     if math.isclose(total, 0.0, abs_tol=1e-12):
         raise ValueError("sum of weights must be non-zero")
     if not math.isclose(total, 1.0, rel_tol=1e-9, abs_tol=1e-9):
-        w = {k: v / total for k, v in w.items()}
+        weights = {k: v / total for k, v in weights.items()}
 
-    s = w["L1"] * L1 + w["L2"] * L2 + w["L3"] * L3
+    s = weights["L1"] * l1 + weights["L2"] * l2 + weights["L3"] * l3
     return max(-1.0, min(1.0, s))
 
 
