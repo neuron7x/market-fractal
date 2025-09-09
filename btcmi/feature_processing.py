@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from typing import Dict, Tuple
 import math
+import logging
 
 from btcmi.utils import is_number
+
+logger = logging.getLogger(__name__)
 
 
 FeatureMap = Dict[str, float]
@@ -22,11 +25,16 @@ def normalize_features(features: FeatureMap, scales: Dict[str, float]) -> Featur
         A mapping of normalized feature values clipped to ``[-1, 1]``.
     """
 
-    return {
-        k: math.tanh(v / scales.get(k, 1.0))
-        for k, v in features.items()
-        if is_number(v)
-    }
+    norm: FeatureMap = {}
+    for k, v in features.items():
+        if not is_number(v):
+            continue
+        scale = scales.get(k, 1.0)
+        if math.isclose(scale, 0.0, abs_tol=1e-12):
+            logger.debug("Skipping feature %s due to zero scale", k)
+            continue
+        norm[k] = math.tanh(v / scale)
+    return norm
 
 
 def weighted_score(norm: FeatureMap, weights: Dict[str, float]) -> Tuple[float, FeatureMap]:
