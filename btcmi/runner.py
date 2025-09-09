@@ -121,8 +121,8 @@ def run_v2(
     s1, _ = v2.level_signal(n1, w1, data.get("nagr_nodes", []))
     s2, _ = v2.level_signal(n2, w2, data.get("nagr_nodes", []))
     s3, _ = v2.level_signal(n3, w3, data.get("nagr_nodes", []))
-    regime, alphas = v2.router_weights(vol_pctl)
-    overall = v2.combine_levels(s1, s2, s3, alphas)
+    regime, weights = v2.router_weights(vol_pctl)
+    overall = v2.combine_levels(s1, s2, s3, weights=weights)
     coverage = sum(len(x) > 0 for x in [n1, n2, n3]) / 3.0
     conf = round(0.5 + 0.5 * min(coverage, 1.0), 3)
     notes: list[str] = []
@@ -142,7 +142,7 @@ def run_v2(
             "overall_signal_L1": round(s1, 6),
             "overall_signal_L2": round(s2, 6),
             "overall_signal_L3": round(s3, 6),
-            "level_weights": alphas,
+            "level_weights": weights,
         },
         "details": {
             "normalized_micro": {k: round(v, 6) for k, v in n1.items()},
