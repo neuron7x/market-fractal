@@ -1,11 +1,13 @@
 import json
 import pathlib
 import logging
+from collections import deque
 
 from fastapi.testclient import TestClient
 from prometheus_client import CONTENT_TYPE_LATEST
 from prometheus_client.parser import text_string_to_metric_families
 
+import btcmi.api as api
 from btcmi.api import app, load_runners, REQUEST_COUNTER, _req_times
 from btcmi.logging_cfg import JsonFormatter
 
@@ -128,3 +130,30 @@ def test_rate_limit(monkeypatch):
     payload = _load_example("intraday")
     assert client.post("/run", json=payload, headers=HEADERS).status_code == 200
     assert client.post("/run", json=payload, headers=HEADERS).status_code == 429
+
+
+def test_throttle_prunes_stale_clients(monkeypatch):
+    monkeypatch.setenv("BTCMI_RATE_LIMIT", "10")
+    monkeypatch.setenv("BTCMI_RATE_LIMIT_WINDOW", "60")
+    _req_times.clear()
+    _req_times["old"] = deque([0.0])
+    monkeypatch.setattr(api, "monotonic", lambda: 100.0)
+    client = TestClient(app)
+    payload = _load_example("intraday")
+    assert client.post("/run", json=payload, headers=HEADERS).status_code == 200
+    assert "old" not in _req_times
+
+
+def test_throttle_limits_client_cache(monkeypatch):
+    monkeypatch.setenv("BTCMI_RATE_LIMIT", "10")
+    monkeypatch.setenv("BTCMI_RATE_LIMIT_WINDOW", "60")
+    monkeypatch.setenv("BTCMI_RATE_LIMIT_MAX_CLIENTS", "2")
+    _req_times.clear()
+    _req_times["c1"] = deque([90.0])
+    _req_times["c2"] = deque([95.0])
+    monkeypatch.setattr(api, "monotonic", lambda: 100.0)
+    client = TestClient(app)
+    payload = _load_example("intraday")
+    assert client.post("/run", json=payload, headers=HEADERS).status_code == 200
+    assert len(_req_times) <= 2
+    assert "c1" not in _req_times
