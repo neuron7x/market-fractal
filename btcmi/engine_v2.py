@@ -3,12 +3,11 @@
 from __future__ import annotations
 from typing import Dict, List
 import math
-import logging
 from btcmi.config import SCALES as CONFIG_SCALES
 from btcmi.feature_processing import normalize_features, weighted_score
+from btcmi.nagr import nagr
 
 SCALES = CONFIG_SCALES
-logger = logging.getLogger(__name__)
 
 
 def normalize_layer(
@@ -17,33 +16,6 @@ def normalize_layer(
     """Apply normalization to a layer's feature set."""
 
     return normalize_features(feats, scales)
-
-
-def nagr(nodes: List[dict]) -> float:
-    """Aggregate network graph ratings.
-
-    Args:
-        nodes: Sequence of node dicts with ``weight`` and ``score``.
-
-    Returns:
-        Weighted average score clipped to [-1, 1].
-
-    """
-    if not nodes:
-        return 0.0
-    num = 0.0
-    den = 0.0
-    for n in nodes:
-        try:
-            w = float(n.get("weight", 0.0))
-            sc = float(n.get("score", 0.0))
-        except (TypeError, ValueError) as exc:
-            logger.debug("Skipping node with non-numeric data %s: %s", n, exc)
-            continue
-        num += w * sc
-        den += abs(w)
-    den = den or 1.0
-    return max(-1.0, min(1.0, num / den))
 
 
 def level_signal(
