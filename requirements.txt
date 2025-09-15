@@ -9,6 +9,6 @@ opentelemetry-instrumentation-fastapi==0.57b0
 pandas==2.2.2
 prometheus-client==0.19.0
 pycoingecko==3.1.0
-scipy==1.14.1
+scipy==1.15.3
 uvicorn==0.30.1
 
