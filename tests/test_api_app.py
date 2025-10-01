@@ -3,6 +3,8 @@ import pathlib
 import logging
 from collections import deque
 
+import pytest
+
 from fastapi.testclient import TestClient
 from prometheus_client import CONTENT_TYPE_LATEST
 from prometheus_client.parser import text_string_to_metric_families
@@ -19,6 +21,8 @@ def _load_example(name: str) -> dict:
 
 
 HEADERS = {"X-API-Key": "changeme"}
+
+pytestmark = pytest.mark.smoke
 
 
 def test_run_success():

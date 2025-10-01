@@ -6,6 +6,8 @@ from btcmi.config import NORM_SCALE, SCENARIO_WEIGHTS
 from btcmi.feature_processing import normalize_features
 
 
+pytestmark = pytest.mark.smoke
+
 @pytest.fixture
 def raw_features():
     return {

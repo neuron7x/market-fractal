@@ -11,6 +11,8 @@ from btcmi.schema_util import SCHEMA_REGISTRY
 R = Path(__file__).resolve().parents[1]
 CLI = "cli.btcmi"
 
+pytestmark = pytest.mark.smoke
+
 
 def test_run_v1_missing_scenario(tmp_path):
     data = {"window": "intraday"}

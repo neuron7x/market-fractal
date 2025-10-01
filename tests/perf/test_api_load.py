@@ -4,11 +4,16 @@ import json
 from pathlib import Path
 from typing import List, Tuple
 
+import pytest
+
 
 def load_values(path: Path) -> List[float]:
     with path.open() as f:
         data = json.load(f)
     return data["values"]
+
+
+pytestmark = pytest.mark.regression
 
 
 def summarize(values: List[float]) -> Tuple[float, int]:

@@ -5,6 +5,8 @@ import pytest
 from btcmi.utils import is_number
 
 
+pytestmark = pytest.mark.smoke
+
 @pytest.mark.parametrize("val", [1, 1.0, Fraction(1, 3)])
 def test_is_number_with_real_numbers(val):
     """``is_number`` should return True for real numeric objects."""

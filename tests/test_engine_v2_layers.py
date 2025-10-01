@@ -10,6 +10,8 @@ from btcmi.engine_v2 import (
 from btcmi.feature_processing import normalize_features, weighted_score
 
 
+pytestmark = pytest.mark.smoke
+
 def test_normalize_features_handles_empty_and_non_numeric_and_extreme():
     assert normalize_features({}, {"a": 1.0}) == {}
     feats = {"x": 1e6, "y": "bad"}

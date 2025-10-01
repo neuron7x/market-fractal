@@ -7,6 +7,8 @@ from btcmi import schema_util
 from btcmi.schema_util import validate_json
 
 
+pytestmark = pytest.mark.smoke
+
 def test_validate_json_additional_properties(tmp_path):
     pytest.importorskip("jsonschema")
     schema = {
